@@ -1,0 +1,135 @@
+{
+    "dataRoles": [{
+            "displayName": "行",
+            "name": "rows",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "列",
+            "name": "cols",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "值",
+            "name": "values",
+            "kind": "Measure"
+        }
+    ],
+    "dataViewMappings": [{
+        "conditions": [
+            {
+                "rows": {
+                    "max": 0
+                },
+                "columns": {
+                    "max": 0
+                },
+                "measure": {
+                    "min": 1
+                }
+            },
+            {
+                "rows": {
+                    "min": 1
+                },
+                "columns": {
+                    "min": 0
+                },
+                "measure": {
+                    "min": 0
+                }
+            },
+            {
+                "rows": {
+                    "min": 0
+                },
+                "columns": {
+                    "min": 1
+                },
+                "measure": {
+                    "min": 0
+                }
+            }
+        ],
+        "matrix": {
+            "rows": {
+                "select": [
+                        {
+                            "for": {
+                                "in": "rows"
+                            }
+                        }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": {
+                            "count": 300000
+                        }
+                    }
+            },
+            "columns": {
+                "for": {
+                    "in": "cols"
+                },
+                "dataReductionAlgorithm": {
+                    "top": {
+                        "count": 300000
+                    }
+                }
+            },
+            "values": {
+                "select": [
+                        {
+                            "bind": {
+                                "to": "values"
+                            }
+                        }
+                    ]
+            }
+        }
+    }],
+    "objects": {
+        "enableAxis": {
+            "displayName": "Enable Axis",
+            "properties": {
+                "show": {
+                    "displayName": "Enable Axis",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "colorSelector": {
+            "displayName": "Data Colors",
+            "properties": {
+                "fill": {
+                    "displayName": "Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "generalView": {
+            "displayName": "General View",
+            "properties": {
+                "opacity": {
+                    "displayName": "Bars Opacity",
+                    "type": {
+                        "integer": true
+                    }
+                },
+                "showHelpLink": {
+                    "displayName": "Show Help Button",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        }
+    }
+}
