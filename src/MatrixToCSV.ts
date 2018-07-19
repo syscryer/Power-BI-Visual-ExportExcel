@@ -18,6 +18,8 @@ module powerbi.extensibility.visual {
         generalView: {
             opacity: number;
             showHelpLink: boolean;
+            title: string;
+            exportUrl: string;
         };
 
     }
@@ -43,7 +45,18 @@ module powerbi.extensibility.visual {
             this._value = _value;
         }
     }
+    interface MatrixToCSVSettings {
+        enableAxis: {
+            show: boolean;
+        };
 
+        generalView: {
+            opacity: number;
+            showHelpLink: boolean;
+            title: string;
+            exportUrl: string;
+        };
+    }
     export class MatrixToCSV implements IVisual {
         private svg: d3.Selection<SVGElement>;
         public host: IVisualHost;
@@ -61,6 +74,7 @@ module powerbi.extensibility.visual {
         private textNode: Text;
         public csvstr = "";
         public new_p: HTMLElement;
+        public new_p1: HTMLElement;
         public rowsList: string[] = [];
         public str1 = "";
         public size1 = 0;
@@ -68,6 +82,8 @@ module powerbi.extensibility.visual {
         public new_em: HTMLElement;
         public dataView: DataView;
         public clCount = 0;
+        public title: string;
+        public exportUrl: string;
 
         static Config = {
             xScalePadding: 0.1,
@@ -96,16 +112,17 @@ module powerbi.extensibility.visual {
             this.host = options.host;
             this.target = options.element;
             this.updateCount = 0;
+
             debugger;
 
             if (typeof document !== "undefined") {
                 this.textNode = document.createTextNode(this.updateCount.toString());
 
                 this.new_p = document.createElement("button");
-                this.new_p.appendChild(document.createTextNode("导出"));
+                this.new_p.appendChild(document.createTextNode("导出CSV"));
                 this.new_p.style.border = "none";
                 this.new_p.style.height = "22px";
-                this.new_p.style.width = "50px";
+                this.new_p.style.width = "80px";
                 this.new_p.style.fontFamily = "微软雅黑";
                 this.new_p.style.textAlign = "center";
                 this.new_p.style.backgroundColor = "#01B8AA";
@@ -119,82 +136,90 @@ module powerbi.extensibility.visual {
                 this.target.appendChild(this.new_p);
 
 
-                // let new_p1 = document.createElement("button");
-                // new_p1.appendChild(document.createTextNode("刷新数据"));
-                // new_p1.onclick = (e: Event) => {
-                //     this.btn_click();
-                // };
-                // this.target.appendChild(new_p1);
+                this.new_p1 = document.createElement("button");
+                this.new_p1.appendChild(document.createTextNode("导出Excel"));
+                this.new_p1.style.border = "none";
+                this.new_p1.style.height = "22px";
+                this.new_p1.style.width = "80px";
+                this.new_p1.style.fontFamily = "微软雅黑";
+                this.new_p1.style.textAlign = "center";
+                this.new_p1.style.backgroundColor = "#01B8AA";
+                this.new_p1.style.color = "#FFFFFF";
+                this.new_p1.onclick = (e: Event) => {
+                    this.btn_click();
+                };
+                this.target.appendChild(this.new_p1);
 
-                // const new_br = document.createElement("br");
-                // this.target.appendChild(new_br);
+                const new_br = document.createElement("br");
+                this.target.appendChild(new_br);
 
-                // this.new_em = document.createElement("textarea");
-                // this.new_em.appendChild(this.textNode);
-                // this.new_em.style.height = "100%";
-                // this.new_em.style.width = "100%";
-                // this.target.appendChild(this.new_em);
-
+                this.new_em = document.createElement("textarea");
+                this.new_em.appendChild(this.textNode);
+                this.new_em.style.height = "100%";
+                this.new_em.style.width = "100%";
+                this.target.appendChild(this.new_em);
             }
         }
 
         //测试按钮
         public btn_click() {
-
             debugger;
-            const findApi = (methodName) => {
-                return this.host[methodName] ? (arg) => {
-                    this.host[methodName](arg);
-                } : this.hostServices && this.hostServices[methodName] ? (arg) => {
-                    this.hostServices[methodName](arg);
-                } : null;
-            };
-            this.loadMoreData = findApi('loadMoreData') || function () { };
+            let matrix = this.dataView.matrix;
+            let str: string = "";
 
+            let paramData = {
+                title: this.title,
+                dataView: JSON.stringify(this.dataView),
+                rowsroot: JSON.stringify(matrix.rows.root),
+                colsroot: JSON.stringify(matrix.columns.root),
+                csvstr: this.csvstr
+            }
 
+            this.download(this.exportUrl, paramData)
+            // $.ajax({
+            //     url: this.exportUrl,
+            //     type: "post",
+            //     contentType: "application/json",
+            //     dataType: 'json',
+            //     data: JSON.stringify(paramData),
+            //     success: function (data) {
+            //         console.log(data);
 
-            $.each(['a', 'b', 'c'], function (index, value) {
-                console.log(index + " " + value);
-            })
+            //         //this.textNode.textContent = data;
+            //     }
+            // });
 
-            $.get("http://localhost:8012/api/values/QueryByDax", { id: "1" }, function (data) {
-                console.log(data);
-
-            });
             // check if more data is expected for the current dataview
             // if (this.dataView.metadata.segment) {
             //     //request for more data if available
 
             //     // let request_accepted: boolean = this.host.fetchMoreData();
             //     this.host.applyJsonFilter.apply(function () { });
+        }
 
-            //     // handle rejection
-            //     // if (request_accepted) {
-            //     console.log(this.dataView.matrix.rows.root.children.length);
-
-            //     this.textNode.textContent = "";
-            //     this.csvstr = "";
-            //     this.rowsList = [];
-            //     this.str1 = "";
-            //     this.size1 = 0;
-
-
-            //     let rows = this.dataView.matrix.rows;
-            //     let rowslevl = rows.levels.length;
-
-            //     let cols = this.dataView.matrix.columns;
-            //     let valueSources = this.dataView.matrix.valueSources;
-
-
-            //     this.csvstr = this.clCount + "--" + this.handleCols(cols.root, rowslevl - 1) + this.handleRows(rows.root, valueSources);
+        public download(url, data) {
+            //var url = 'download/?filename=aaa.txt';
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);    // 也可以使用POST方式，根据接口
+            xhr.responseType = "blob";  // 返回类型blob
+            // 定义请求完成的处理函数，请求前也可以增加加载框/禁用下载按钮逻辑
+            var content = JSON.stringify(data);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onload = (e: Event) => {
+                if (xhr.status === 200) {
+                    // 返回200
+                    var blob = xhr.response;
+                    saveAs(blob, new Date().toLocaleDateString() + this.title + ".xlsx");
+                }
+            };
 
 
-            //     this.textNode.textContent = this.csvstr;
-            //     this.clCount++;
-            //     //this.new_em.appendChild(this.textNode);
-            //     //}
-            // }
+            // function () {
+            //     // 请求完成
 
+            // };
+            // 发送ajax请求
+            xhr.send(content)
         }
 
         /**
@@ -238,6 +263,36 @@ module powerbi.extensibility.visual {
             this.valueCount = options.dataViews[0].matrix.valueSources.length;
             this.csvstr = this.handleCols(cols.root, rowslevl - 1) + this.handleRows(rows.root, valueSources);
             this.textNode.textContent = this.csvstr;
+
+
+
+
+            let objects = dataViews[0].metadata.objects;
+            let defaultSettings: MatrixToCSVSettings = {
+                enableAxis: {
+                    show: false,
+                },
+                generalView: {
+                    opacity: 100,
+                    showHelpLink: false,
+                    title: "",
+                    exportUrl: ""
+                }
+            };
+            let matrixToCSVSettings: MatrixToCSVSettings = {
+                enableAxis: {
+                    show: getValue<boolean>(objects, 'enableAxis', 'show', defaultSettings.enableAxis.show),
+                },
+                generalView: {
+                    opacity: getValue<number>(objects, 'generalView', 'opacity', defaultSettings.generalView.opacity),
+                    showHelpLink: getValue<boolean>(objects, 'generalView', 'showHelpLink', defaultSettings.generalView.showHelpLink),
+                    title: getValue<string>(objects, 'generalView', 'title', defaultSettings.generalView.title),
+                    exportUrl: getValue<string>(objects, 'generalView', 'exportUrl', defaultSettings.generalView.exportUrl)
+                }
+            };
+            this.barChartSettings = matrixToCSVSettings;
+            this.title = matrixToCSVSettings.generalView.title;
+            this.exportUrl = matrixToCSVSettings.generalView.exportUrl;
         }
 
         //处理列
@@ -326,6 +381,44 @@ module powerbi.extensibility.visual {
                             dataMap[fieldsRef] = value + dharr;
                         }
 
+                    }
+                    else {
+                        let beans: DataViewMatrixNode[] = childrenBean.children;
+                        if (beans != null) {
+                            let childIdentityFieldsBeans: data.ISQExpr[] = childrenBean.childIdentityFields;
+                            if (childIdentityFieldsBeans != null) {
+                                this.handleChildren(beans, childIdentityFieldsBeans, dataMap);
+                            }
+                        }
+                        let dh = "";
+                        for (let index = 0; index < this.valueCount; index++) {
+                            dh += ",";
+                        }
+
+                        let b = false;
+                        for (let k in dataMap) {
+                            if (k === fieldsRef) {
+                                b = true;
+                            }
+                        }
+                        let dharr = "";
+                        if (beans != null && beans.length > 0 && beans[0].children != null) {
+                            for (let index = 0; index < beans.length; index++) {
+                                dharr += dh;
+                            }
+                        }
+                        else {
+                            dharr = dh;
+                        }
+                        if (b) {
+                            let valueStr: string = dataMap[fieldsRef];
+                            valueStr = valueStr + "," + dharr;
+                            if (valueStr.substr(valueStr.length - 1, 1) === ',')
+                                valueStr = valueStr.substr(1);
+                            dataMap[fieldsRef] = valueStr;
+                        } else {
+                            dataMap[fieldsRef] = "," + dharr;
+                        }
                     }
                 });
             }
@@ -481,8 +574,42 @@ module powerbi.extensibility.visual {
          * @param {EnumerateVisualObjectInstancesOptions} options - Map of defined objects
          */
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
+            debugger;
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
+
+            switch (objectName) {
+                case 'enableAxis':
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            show: this.barChartSettings.enableAxis.show,
+                        },
+                        selector: null
+                    });
+                    break;
+                case 'generalView':
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            opacity: this.barChartSettings.generalView.opacity,
+                            showHelpLink: this.barChartSettings.generalView.showHelpLink,
+                            title: this.barChartSettings.generalView.title,
+                            exportUrl: this.barChartSettings.generalView.exportUrl
+                        },
+                        validValues: {
+                            opacity: {
+                                numberRange: {
+                                    min: 10,
+                                    max: 100
+                                }
+                            }
+                        },
+                        selector: null
+                    });
+                    break;
+            };
+
             return objectEnumeration;
         }
 

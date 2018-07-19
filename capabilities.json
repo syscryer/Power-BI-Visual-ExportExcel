@@ -16,8 +16,7 @@
         }
     ],
     "dataViewMappings": [{
-        "conditions": [
-            {
+        "conditions": [{
                 "rows": {
                     "max": 0
                 },
@@ -53,18 +52,16 @@
         ],
         "matrix": {
             "rows": {
-                "select": [
-                        {
-                            "for": {
-                                "in": "rows"
-                            }
-                        }
-                    ],
-                    "dataReductionAlgorithm": {
-                        "top": {
-                            "count": 300000
-                        }
+                "select": [{
+                    "for": {
+                        "in": "rows"
                     }
+                }],
+                "dataReductionAlgorithm": {
+                    "top": {
+                        "count": 300000
+                    }
+                }
             },
             "columns": {
                 "for": {
@@ -77,13 +74,11 @@
                 }
             },
             "values": {
-                "select": [
-                        {
-                            "bind": {
-                                "to": "values"
-                            }
-                        }
-                    ]
+                "select": [{
+                    "bind": {
+                        "to": "values"
+                    }
+                }]
             }
         }
     }],
@@ -127,6 +122,18 @@
                     "displayName": "Show Help Button",
                     "type": {
                         "bool": true
+                    }
+                },
+                "title": {
+                    "displayName": "导出内容标题",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "exportUrl": {
+                    "displayName": "服务器地址",
+                    "type": {
+                        "text": true
                     }
                 }
             }
