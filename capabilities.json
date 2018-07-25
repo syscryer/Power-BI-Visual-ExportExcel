@@ -110,16 +110,16 @@
             }
         },
         "generalView": {
-            "displayName": "General View",
+            "displayName": "自定义设置",
             "properties": {
                 "opacity": {
-                    "displayName": "Bars Opacity",
+                    "displayName": "透明度",
                     "type": {
                         "integer": true
                     }
                 },
                 "showHelpLink": {
-                    "displayName": "Show Help Button",
+                    "displayName": "帮助",
                     "type": {
                         "bool": true
                     }
@@ -134,6 +134,12 @@
                     "displayName": "服务器地址",
                     "type": {
                         "text": true
+                    }
+                },
+                "isTableVisibility": {
+                    "displayName": "是否显示表格",
+                    "type": {
+                        "bool": true
                     }
                 }
             }

@@ -20,6 +20,7 @@ module powerbi.extensibility.visual {
             showHelpLink: boolean;
             title: string;
             exportUrl: string;
+            isTableVisibility: boolean;
         };
 
     }
@@ -55,6 +56,7 @@ module powerbi.extensibility.visual {
             showHelpLink: boolean;
             title: string;
             exportUrl: string;
+            isTableVisibility: boolean;
         };
     }
     export class MatrixToCSV implements IVisual {
@@ -80,10 +82,13 @@ module powerbi.extensibility.visual {
         public size1 = 0;
         public valueCount = 0;
         public new_em: HTMLElement;
+        public matx: HTMLElement;
         public dataView: DataView;
         public clCount = 0;
         public title: string;
         public exportUrl: string;
+        public isTableVisibility: boolean;
+        public matrixTable: HTMLTableElement;
 
         static Config = {
             xScalePadding: 0.1,
@@ -113,20 +118,21 @@ module powerbi.extensibility.visual {
             this.target = options.element;
             this.updateCount = 0;
 
-            debugger;
-
             if (typeof document !== "undefined") {
                 this.textNode = document.createTextNode(this.updateCount.toString());
 
                 this.new_p = document.createElement("button");
                 this.new_p.appendChild(document.createTextNode("导出CSV"));
-                this.new_p.style.border = "none";
-                this.new_p.style.height = "22px";
-                this.new_p.style.width = "80px";
-                this.new_p.style.fontFamily = "微软雅黑";
-                this.new_p.style.textAlign = "center";
-                this.new_p.style.backgroundColor = "#01B8AA";
-                this.new_p.style.color = "#FFFFFF";
+                // this.new_p.style.border = "none";
+                // this.new_p.style.height = "22px";
+                 this.new_p.style.width = "80px";
+                this.new_p.style.fontSize = "11px";
+                this.new_p.style.marginLeft = "8px";
+                // this.new_p.style.fontFamily = "微软雅黑";
+                // this.new_p.style.textAlign = "center";
+                // this.new_p.style.backgroundColor = "#01B8AA";
+                // this.new_p.style.color = "#FFFFFF";
+                this.new_p.className = "btn btn-success btn-sm";
 
                 this.new_p.onclick = (e: Event) => {
                     let blob = new Blob([this.csvstr], { type: "text/plain;charset=utf-8" });
@@ -135,16 +141,19 @@ module powerbi.extensibility.visual {
 
                 this.target.appendChild(this.new_p);
 
-
                 this.new_p1 = document.createElement("button");
                 this.new_p1.appendChild(document.createTextNode("导出Excel"));
-                this.new_p1.style.border = "none";
-                this.new_p1.style.height = "22px";
-                this.new_p1.style.width = "80px";
-                this.new_p1.style.fontFamily = "微软雅黑";
-                this.new_p1.style.textAlign = "center";
-                this.new_p1.style.backgroundColor = "#01B8AA";
-                this.new_p1.style.color = "#FFFFFF";
+                // this.new_p1.style.border = "none";
+                // this.new_p1.style.height = "22px";
+                 this.new_p1.style.width = "80px";
+                this.new_p1.style.fontSize = "11px";
+                this.new_p1.style.marginLeft = "8px";
+                this.new_p1.style.marginTop = "5px";
+                // this.new_p1.style.fontFamily = "微软雅黑";
+                // this.new_p1.style.textAlign = "center";
+                // this.new_p1.style.backgroundColor = "#01B8AA";
+                // this.new_p1.style.color = "#FFFFFF";
+                this.new_p1.className = "btn btn-primary btn-sm";
                 this.new_p1.onclick = (e: Event) => {
                     this.btn_click();
                 };
@@ -157,13 +166,175 @@ module powerbi.extensibility.visual {
                 this.new_em.appendChild(this.textNode);
                 this.new_em.style.height = "100%";
                 this.new_em.style.width = "100%";
-                this.target.appendChild(this.new_em);
+                //  this.target.appendChild(this.new_em);
+
+                // this.matx = document.createElement("div");
+                // this.matx.id = "matxdiv";
+                // this.matx.style.height = "100%";
+                // this.matx.style.width = this.target.style.width;
+
+                // this.target.appendChild(this.matx);
+
+
+                this.svg = this.svg = d3.select(options.element).append('div')
+                    .classed('DataDiv', true)
+                    .attr('id', 'matx');
             }
         }
 
+
+        public dataToTable(): string {
+            //Make variables
+
+            //Get old text
+            var oldText = this.csvstr;
+            //Split into lines
+            var oldTextArr = oldText.split("\n");
+            var newText = "";
+            var rowLevel = this.dataView.matrix.rows.levels.length;
+            var colLevel = this.dataView.matrix.columns.levels.length;
+            var valCount = this.dataView.matrix.valueSources.length;
+            //Get rid of quotes at beginning and end
+            for (var i = 0; i < oldTextArr.length; i++) {
+                oldTextArr[i] = oldTextArr[i].replace(/\r/, "");
+                oldTextArr[i] = oldTextArr[i].replace(/^\'/, "");
+                oldTextArr[i] = oldTextArr[i].replace(/^\"/, "");
+                oldTextArr[i] = oldTextArr[i].replace(/"$/, "");
+                oldTextArr[i] = oldTextArr[i].replace(/'$/, "");
+                if (i >= colLevel - 1) {
+                    oldTextArr[i] = "<tr><td>" + oldTextArr[i] + "</td></tr>";
+                }
+            }
+            debugger;
+            //make table
+            //var trs = "";
+            for (var i = 0; i < oldTextArr.length; i++) {
+                if (i < colLevel - 1) {
+                    var tr = "<tr><td colspan='" + (rowLevel - 1) + "'></td>";
+                    var tds = oldTextArr[i].split(","); var start = 0; var cnt = 1; var m = 0; var secVal = ""; var b = false;
+                    var tdsArr = [];
+                    for (let j = rowLevel - 1; j <= tds.length; j++) {
+                        var val = tds[j];
+                        if (j === rowLevel - 1)//&& string.IsNullOrEmpty(val)
+                        {
+                            tr += "<td >" + val + "</td>";
+                            cnt = 1;
+                        }
+                        if (j === rowLevel && val === "")//&& string.IsNullOrEmpty(val)
+                        {
+                            cnt = 1;
+                            b = true;
+                        }
+                        if (j > rowLevel) {
+                            cnt++;
+                        }
+                        if (j > rowLevel && val !== "") {
+                            tdsArr.push(val);
+                            m++;
+                            if (m === 1) {
+                                if (b) {
+                                    tr += "<td colspan='" + (cnt - 1) + "'></td>";
+                                    secVal = val;
+                                }
+                                else {
+                                    tr += "<td colspan='" + (cnt - 1) + "'>" + val + "</td>";
+                                    secVal = val;
+                                }
+                            }
+                            else if (m === 2 && b) {
+                                tr += "<td colspan='" + (cnt) + "'>" + secVal + "</td>";
+                                b = false;
+                            }
+                            else {
+                                tr += "<td colspan='" + cnt + "'>" + tdsArr[m - 2] + "</td>";
+                            }
+                            cnt = 0;
+                        }
+                    }
+                    tr += "</tr>";
+                    newText += tr;
+                }
+                else {
+                    oldTextArr[i] = oldTextArr[i].replace(new RegExp(',', "gi"), "</td><td>");
+                    newText += oldTextArr[i];
+                }
+            }
+            newText = "<table class='table table-striped table-sm' cellspacing='0px' id='matxtable' align='center'>\n" + newText + "</table>\n";
+            // this.matrixTable = document.createElement("table");
+            // this.matrixTable.className = "table table-striped table-sm";
+            // this.matrixTable.id = "matxtable";
+            // this.matrixTable.innerHTML = newText;
+            return newText;
+        }
+
+        public tableMc() {
+            var rowLevel = 3;
+            var colLevel = 3;
+            var valCount = 2;
+            var oldText = this.csvstr;
+            var oldTextArr = oldText.split("\n");
+            debugger;
+            let tb: HTMLTableElement = document.querySelector("table");
+            let cc = 0;
+            for (cc = 0; cc < rowLevel - 1; cc++)//
+            {
+                debugger;
+                let start = 0, cnt = 0, m = 0, j = 0;
+                for (j = colLevel; j < oldTextArr.length; j++) {
+                    let val = "";
+                    if (j === oldTextArr.length - 1) {
+                        let ssss = 1;
+                    }
+                    if (tb.rows[j].cells[cc] != null)
+                        val = tb.rows[j].cells[cc].textContent;
+
+                    if (j === colLevel + 1)//&& string.IsNullOrEmpty(val)
+                    {
+                        start = colLevel + 1;
+                    }
+                    if (j > colLevel + 1 && val === "") {
+                        cnt++;
+                    }
+                    if (j >= colLevel && val !== "") {
+                        m++;
+                        // if (m === 1) {
+                        this.Merge(tb, j - cnt - 1, j - 1, cc);
+                        // }
+                        // else {
+                        //     this.Merge(tb, j - cnt - 2, j - 1, cc);
+                        // }
+                        cnt = 0;
+                    }
+
+                    // if (j == dimension.Rows) {
+                    //     ws.Cells[dimension.Rows - cnt, i, dimension.Rows - 1, i].Merge = true;
+                    // }
+                }
+            }
+        }
+
+        public Merge(tb: HTMLTableElement, startRow, endRow, col) {
+            // if (col >= tb.rows[0].cells.length) {
+            //     return;
+            // }
+            // if (col == 0) { endRow = tb.rows.length - 1; }
+            // for (var i = startRow; i < endRow; i++) {
+            //     if (tb.rows[startRow].cells[col].innerHTML == tb.rows[i + 1].cells[col].innerHTML) {
+            //         tb.rows[i + 1].removeChild(tb.rows[i + 1].cells[0]);
+            //         tb.rows[startRow].cells[col].rowSpan = (tb.rows[startRow].cells[col].rowSpan | 0) + 1;
+            //         if (i == endRow - 1 && startRow != endRow) {
+            //             this.Merge(tb, startRow, endRow, col + 1);
+            //         }
+            //     } else {
+            //         this.Merge(tb, startRow, i + 0, col + 1);
+            //         startRow = i + 1;
+            //     }
+            // }
+        }
+
+
         //测试按钮
         public btn_click() {
-            debugger;
             let matrix = this.dataView.matrix;
             let str: string = "";
 
@@ -176,25 +347,6 @@ module powerbi.extensibility.visual {
             }
 
             this.download(this.exportUrl, paramData)
-            // $.ajax({
-            //     url: this.exportUrl,
-            //     type: "post",
-            //     contentType: "application/json",
-            //     dataType: 'json',
-            //     data: JSON.stringify(paramData),
-            //     success: function (data) {
-            //         console.log(data);
-
-            //         //this.textNode.textContent = data;
-            //     }
-            // });
-
-            // check if more data is expected for the current dataview
-            // if (this.dataView.metadata.segment) {
-            //     //request for more data if available
-
-            //     // let request_accepted: boolean = this.host.fetchMoreData();
-            //     this.host.applyJsonFilter.apply(function () { });
         }
 
         public download(url, data) {
@@ -213,14 +365,10 @@ module powerbi.extensibility.visual {
                 }
             };
 
-
-            // function () {
-            //     // 请求完成
-
-            // };
             // 发送ajax请求
             xhr.send(content)
         }
+
 
         /**
          * Updates the state of the visual. Every sequential databinding and resize will call update.
@@ -245,28 +393,6 @@ module powerbi.extensibility.visual {
             let dataViews = options.dataViews;
             this.dataView = options.dataViews[0];
 
-
-            //API v1.12
-            // if (options.operationKind === VisualDataChangeOperationKind.Create) {
-            //     debugger;
-
-            // }
-            // // on second or subesquent segments:
-            // if (options.operationKind === VisualDataChangeOperationKind.Append) {
-            //     debugger;
-            // }
-
-            let rows = dataViews[0].matrix.rows;
-            let rowslevl = rows.levels.length;
-            let cols = dataViews[0].matrix.columns;
-            let valueSources = dataViews[0].matrix.valueSources;
-            this.valueCount = options.dataViews[0].matrix.valueSources.length;
-            this.csvstr = this.handleCols(cols.root, rowslevl - 1) + this.handleRows(rows.root, valueSources);
-            this.textNode.textContent = this.csvstr;
-
-
-
-
             let objects = dataViews[0].metadata.objects;
             let defaultSettings: MatrixToCSVSettings = {
                 enableAxis: {
@@ -275,8 +401,9 @@ module powerbi.extensibility.visual {
                 generalView: {
                     opacity: 100,
                     showHelpLink: false,
-                    title: "",
-                    exportUrl: ""
+                    title: "标题",
+                    exportUrl: "http://10.104.20.97:8095/api/CreateExcel/DownloadExcel",
+                    isTableVisibility: false
                 }
             };
             let matrixToCSVSettings: MatrixToCSVSettings = {
@@ -287,12 +414,32 @@ module powerbi.extensibility.visual {
                     opacity: getValue<number>(objects, 'generalView', 'opacity', defaultSettings.generalView.opacity),
                     showHelpLink: getValue<boolean>(objects, 'generalView', 'showHelpLink', defaultSettings.generalView.showHelpLink),
                     title: getValue<string>(objects, 'generalView', 'title', defaultSettings.generalView.title),
-                    exportUrl: getValue<string>(objects, 'generalView', 'exportUrl', defaultSettings.generalView.exportUrl)
+                    exportUrl: getValue<string>(objects, 'generalView', 'exportUrl', defaultSettings.generalView.exportUrl),
+                    isTableVisibility: getValue<boolean>(objects, 'generalView', 'isTableVisibility', defaultSettings.generalView.isTableVisibility),
                 }
             };
             this.barChartSettings = matrixToCSVSettings;
             this.title = matrixToCSVSettings.generalView.title;
             this.exportUrl = matrixToCSVSettings.generalView.exportUrl;
+            this.isTableVisibility = matrixToCSVSettings.generalView.isTableVisibility;
+
+            let rows = dataViews[0].matrix.rows;
+            let rowslevl = rows.levels.length;
+            let cols = dataViews[0].matrix.columns;
+            let valueSources = dataViews[0].matrix.valueSources;
+            this.valueCount = options.dataViews[0].matrix.valueSources.length;
+            this.csvstr = this.handleCols(cols.root, rowslevl - 1) + this.handleRows(rows.root, valueSources);
+            this.textNode.textContent = this.csvstr;
+            // this.matx.innerHTML = this.dataToTable();
+            if (this.isTableVisibility) {//是否显示表格预览
+                d3.select('.DataDiv').style('overflow', 'auto')
+                    .html(this.dataToTable())
+                    .style("height", "calc(100% - 35px)")
+                    .style("width", `${options.viewport.width}px`);
+                // this.tableMc();
+            }
+
+            console.log(options.viewport.height);
         }
 
         //处理列
@@ -574,7 +721,6 @@ module powerbi.extensibility.visual {
          * @param {EnumerateVisualObjectInstancesOptions} options - Map of defined objects
          */
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-            debugger;
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
 
@@ -595,7 +741,8 @@ module powerbi.extensibility.visual {
                             opacity: this.barChartSettings.generalView.opacity,
                             showHelpLink: this.barChartSettings.generalView.showHelpLink,
                             title: this.barChartSettings.generalView.title,
-                            exportUrl: this.barChartSettings.generalView.exportUrl
+                            exportUrl: this.barChartSettings.generalView.exportUrl,
+                            isTableVisibility: this.barChartSettings.generalView.isTableVisibility
                         },
                         validValues: {
                             opacity: {
