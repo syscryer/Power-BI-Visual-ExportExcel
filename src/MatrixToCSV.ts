@@ -118,41 +118,37 @@ module powerbi.extensibility.visual {
             this.target = options.element;
             this.updateCount = 0;
 
+            // var oMeta = document.createElement('meta');
+            // oMeta.httpEquiv = 'Content-Security-Policy';
+            // oMeta.content = 'upgrade-insecure-requests';
+            // document.getElementsByTagName('head')[0].appendChild(oMeta);
+
             if (typeof document !== "undefined") {
                 this.textNode = document.createTextNode(this.updateCount.toString());
-
                 this.new_p = document.createElement("button");
                 this.new_p.appendChild(document.createTextNode("导出CSV"));
-                // this.new_p.style.border = "none";
-                // this.new_p.style.height = "22px";
-                 this.new_p.style.width = "80px";
+                this.new_p.style.width = "80px";
                 this.new_p.style.fontSize = "11px";
                 this.new_p.style.marginLeft = "8px";
-                // this.new_p.style.fontFamily = "微软雅黑";
-                // this.new_p.style.textAlign = "center";
-                // this.new_p.style.backgroundColor = "#01B8AA";
-                // this.new_p.style.color = "#FFFFFF";
+                this.new_p.style.marginTop = "5px";
                 this.new_p.className = "btn btn-success btn-sm";
 
                 this.new_p.onclick = (e: Event) => {
+                    this.new_p.className = "btn  btn-success btn-sm disabled"; //下载数据中，禁止按钮
+                    this.new_p.textContent = "下载中...";
                     let blob = new Blob([this.csvstr], { type: "text/plain;charset=utf-8" });
                     saveAs(blob, new Date().toLocaleDateString() + "_数据导出" + ".csv");
+                    this.new_p.className = "btn  btn-success btn-sm"; //下载数据中，禁止按钮
+                    this.new_p.textContent = "导出CSV";
                 };
-
                 this.target.appendChild(this.new_p);
 
                 this.new_p1 = document.createElement("button");
                 this.new_p1.appendChild(document.createTextNode("导出Excel"));
-                // this.new_p1.style.border = "none";
-                // this.new_p1.style.height = "22px";
-                 this.new_p1.style.width = "80px";
+                this.new_p1.style.width = "80px";
                 this.new_p1.style.fontSize = "11px";
                 this.new_p1.style.marginLeft = "8px";
                 this.new_p1.style.marginTop = "5px";
-                // this.new_p1.style.fontFamily = "微软雅黑";
-                // this.new_p1.style.textAlign = "center";
-                // this.new_p1.style.backgroundColor = "#01B8AA";
-                // this.new_p1.style.color = "#FFFFFF";
                 this.new_p1.className = "btn btn-primary btn-sm";
                 this.new_p1.onclick = (e: Event) => {
                     this.btn_click();
@@ -167,21 +163,11 @@ module powerbi.extensibility.visual {
                 this.new_em.style.height = "100%";
                 this.new_em.style.width = "100%";
                 //  this.target.appendChild(this.new_em);
-
-                // this.matx = document.createElement("div");
-                // this.matx.id = "matxdiv";
-                // this.matx.style.height = "100%";
-                // this.matx.style.width = this.target.style.width;
-
-                // this.target.appendChild(this.matx);
-
-
                 this.svg = this.svg = d3.select(options.element).append('div')
                     .classed('DataDiv', true)
                     .attr('id', 'matx');
             }
         }
-
 
         public dataToTable(): string {
             //Make variables
@@ -189,7 +175,7 @@ module powerbi.extensibility.visual {
             //Get old text
             var oldText = this.csvstr;
             //Split into lines
-            var oldTextArr = oldText.split("\n");
+            var oldTextArr = oldText.split("\r\n");
             var newText = "";
             var rowLevel = this.dataView.matrix.rows.levels.length;
             var colLevel = this.dataView.matrix.columns.levels.length;
@@ -211,7 +197,8 @@ module powerbi.extensibility.visual {
             for (var i = 0; i < oldTextArr.length; i++) {
                 if (i < colLevel - 1) {
                     var tr = "<tr><td colspan='" + (rowLevel - 1) + "'></td>";
-                    var tds = oldTextArr[i].split(","); var start = 0; var cnt = 1; var m = 0; var secVal = ""; var b = false;
+                    var tds = oldTextArr[i].split(/,(?=(?:[^']*(?:'[^']*')?[^']*)*$)/);
+                    var start = 0; var cnt = 1; var m = 0; var secVal = ""; var b = false;
                     var tdsArr = [];
                     for (let j = rowLevel - 1; j <= tds.length; j++) {
                         var val = tds[j];
@@ -260,10 +247,6 @@ module powerbi.extensibility.visual {
                 }
             }
             newText = "<table class='table table-striped table-sm' cellspacing='0px' id='matxtable' align='center'>\n" + newText + "</table>\n";
-            // this.matrixTable = document.createElement("table");
-            // this.matrixTable.className = "table table-striped table-sm";
-            // this.matrixTable.id = "matxtable";
-            // this.matrixTable.innerHTML = newText;
             return newText;
         }
 
@@ -333,40 +316,52 @@ module powerbi.extensibility.visual {
         }
 
 
-        //测试按钮
+        //下载数据中，禁止按钮
         public btn_click() {
+            debugger;
             let matrix = this.dataView.matrix;
             let str: string = "";
 
             let paramData = {
                 title: this.title,
                 dataView: JSON.stringify(this.dataView),
-                rowsroot: JSON.stringify(matrix.rows.root),
-                colsroot: JSON.stringify(matrix.columns.root),
+                //rowsroot: JSON.stringify(matrix.rows.root),
+                //colsroot: JSON.stringify(matrix.columns.root),
                 csvstr: this.csvstr
             }
-
             this.download(this.exportUrl, paramData)
         }
 
         public download(url, data) {
-            //var url = 'download/?filename=aaa.txt';
+            debugger;
+            this.new_p1.className = "btn  btn-primary btn-sm disabled";//下载数据中，禁止按钮
+            this.new_p1.textContent = "下载中...";
+
             var xhr = new XMLHttpRequest();
             xhr.open('POST', url, true);    // 也可以使用POST方式，根据接口
             xhr.responseType = "blob";  // 返回类型blob
             // 定义请求完成的处理函数，请求前也可以增加加载框/禁用下载按钮逻辑
             var content = JSON.stringify(data);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.timeout = 10000; //超时时间：30秒
+
             xhr.onload = (e: Event) => {
                 if (xhr.status === 200) {
                     // 返回200
                     var blob = xhr.response;
                     saveAs(blob, new Date().toLocaleDateString() + this.title + ".xlsx");
+                    this.new_p1.textContent = "导出Excel";
+                    this.new_p1.className = "btn btn-primary btn-sm"; //导出完成，启用按钮
                 }
             };
-
-            // 发送ajax请求
-            xhr.send(content)
+            try {
+                // 发送ajax请求
+                xhr.send(content)
+            }
+            catch (ex) {
+                this.new_p1.textContent = "导出失败";
+                this.new_p1.className = "btn btn-danger btn-sm"; //导出出错，启用按钮
+            }
         }
 
 
@@ -380,11 +375,12 @@ module powerbi.extensibility.visual {
          */
         public update(options: VisualUpdateOptions) {
             options.type = VisualUpdateType.All;
-            // options.viewMode = ViewMode.Edit;
-            // options.editMode = EditMode.Advanced;
             let m = options.dataViews[0].scriptResult;
             debugger;
-
+            if (this.new_p1.textContent === "导出失败" || this.new_p1.textContent === "下载中...") {
+                this.new_p1.textContent = "导出Excel";
+                this.new_p1.className = "btn btn-primary btn-sm"; //刷新时，启用按钮，不在导出
+            }
             this.csvstr = "";
             this.rowsList = [];
             this.str1 = "";
@@ -522,7 +518,7 @@ module powerbi.extensibility.visual {
                         if (b) {
 
                             let valueStr: string = dataMap[fieldsRef];
-                            valueStr = valueStr + value + dharr;
+                            valueStr = valueStr + this.toCsvVal(value == null ? "" : value.toString()) + dharr;
                             dataMap[fieldsRef] = valueStr;
                         } else {
                             dataMap[fieldsRef] = value + dharr;
@@ -571,6 +567,36 @@ module powerbi.extensibility.visual {
             }
         }
 
+        public toCsvVal(value: String): String {
+            if (value === null || value === "") { return value; }
+            value = value.trim();
+            value = this.trim(value, ',', '');
+            let b = false;
+            //20161214 若发现有逗号  需前后加引号 否则会出现串列的情况
+            if (value.indexOf("\"") !== -1) { //若发现有双引号  需要将字符串中的一个双引号替换为两个 并且需前后加双引号
+                value = value.replace(/"/g, "\"\"");
+                value = "\"" + value + "\"";
+                b = true;
+            }
+            if (value.indexOf(",") !== -1 && !b) { //若发现有逗号  需前后加引号
+                value = "\"" + value.replace(/,/g, "，") + "\"";
+                b = false;
+            }
+            return value;
+        }
+
+        public trim(str, char, type) {
+            if (char) {
+                if (type === 'l') {
+                    return str.replace(new RegExp('^\\' + char + '+', 'g'), '');
+                } else if (type === 'r') {
+                    return str.replace(new RegExp('\\' + char + '+$', 'g'), '');
+                }
+                return str.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '');
+            }
+            return str.replace(/^\s+|\s+$/g, '');
+        };
+
         public handleRows(rowsData: DataViewMatrixNode, valuesData: DataViewMetadataColumn[]): string {
             let datalist: string[] = new Array();
             let str = "";
@@ -617,7 +643,7 @@ module powerbi.extensibility.visual {
             let dataStr = "";
             values.forEach(entry => {
                 list.push(entry.index);
-                dataStr = dataStr + "," + entry.displayName;
+                dataStr = dataStr + "," + this.toCsvVal(entry.displayName);
             });
             let listSize = list.length;
             if (listSize > 0) {
@@ -659,13 +685,14 @@ module powerbi.extensibility.visual {
             if (children != null) {
                 for (let i = 0; i < children.length; i++) {
                     let childrenBean = children[i];
+                    let chValue = this.toCsvVal(childrenBean.value == null ? "" : childrenBean.value.toString());
                     let label = "";
                     if (i === 0) {
-                        label = value + "," + childrenBean.value;
+                        label = value + "," + chValue;
                     } else {
                         let level = childrenBean.level;
                         let levelToStr = this.getLevelToStr(level);
-                        label = levelToStr + childrenBean.value;
+                        label = levelToStr + chValue;
                     }
 
                     let values = childrenBean.values;
@@ -676,7 +703,7 @@ module powerbi.extensibility.visual {
                             this.rowsList.push(label + valueStr);
                         } else {
                             let level = childrenBean.level;
-                            let levelToStr = this.getLevelToStr(level) + childrenBean.value;
+                            let levelToStr = this.getLevelToStr(level) + chValue;
                             datalist.push(levelToStr + valueStr);
                             this.rowsList.push(levelToStr + valueStr);
                         }
